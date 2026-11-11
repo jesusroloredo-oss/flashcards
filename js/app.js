@@ -202,6 +202,26 @@ $("form-card").addEventListener("submit", (e) => {
 });
 
 /* ------------------------------ SESIÓN ------------------------------ */
+/* Traduce el código de error de Firebase a un mensaje útil */
+function mensajeLogin(ex) {
+  const code = (ex && ex.code) || "";
+  const m = {
+    "auth/invalid-credential": "Correo o contraseña incorrectos.",
+    "auth/wrong-password": "Contraseña incorrecta.",
+    "auth/user-not-found": "No existe ningún usuario con ese correo en este proyecto de Firebase.",
+    "auth/invalid-email": "El correo no tiene un formato válido.",
+    "auth/operation-not-allowed": "El acceso con correo y contraseña no está activado en Firebase (Authentication > Método de acceso).",
+    "auth/unauthorized-domain": "Este dominio no está autorizado en Firebase (Authentication > Configuración > Dominios autorizados).",
+    "auth/configuration-not-found": "Authentication no está iniciado en Firebase: pulsa «Comenzar» en Authentication.",
+    "auth/invalid-api-key": "La apiKey de config.js no es válida. Vuelve a copiarla de la consola.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "La apiKey de config.js no es válida. Vuelve a copiarla de la consola.",
+    "auth/network-request-failed": "Sin conexión o bloqueado por la red.",
+    "auth/too-many-requests": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+    "auth/user-disabled": "Este usuario está deshabilitado en Firebase.",
+  };
+  return (m[code] || "Error al entrar.") + (code ? " (" + code + ")" : "");
+}
+
 $("form-login").addEventListener("submit", async (e) => {
   e.preventDefault();
   const err = $("login-error");
@@ -210,7 +230,8 @@ $("form-login").addEventListener("submit", async (e) => {
     await almacen.login($("in-email").value.trim(), $("in-pass").value);
     $("in-pass").value = "";
   } catch (ex) {
-    err.textContent = "Correo o contraseña incorrectos.";
+    console.error(ex);
+    err.textContent = mensajeLogin(ex);
     err.hidden = false;
   }
 });
