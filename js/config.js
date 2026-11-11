@@ -8,12 +8,12 @@
    ====================================================================== */
 
    export const FIREBASE_CONFIG = {
-     apiKey: "…",
+     apiKey: "AIzaSyDBogswsFpauh3c6nuolTyrB95tTFPxLe4",
      authDomain: "flashcards-pn.firebaseapp.com",
      projectId: "flashcards-pn",
-     storageBucket: "…",
-     messagingSenderId: "…",
-     appId: "…"
+     storageBucket: "flashcards-pn.firebasestorage.app",
+     messagingSenderId: "972124952345",
+     appId: "1:972124952345:web:99358091b6c81ade939788"
    };
 
 /* Ejemplo de cómo quedará:
