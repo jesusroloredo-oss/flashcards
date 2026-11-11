@@ -5,242 +5,67 @@
 <title>Flashcards Policía Nacional</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0E1420">
-
-<!-- Para instalarla en el iPhone como app: Safari > Compartir > Añadir a pantalla de inicio -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Flashcards">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-<style>
-  :root {
-    --bg: #EEF1F5;
-    --surface: #FFFFFF;
-    --ink: #14213D;
-    --muted: #5B6578;
-    --line: #D5DBE5;
-    --juridicas: #2F5BEA;
-    --sociales: #0F8B8D;
-    --tecnicas: #B86E00;
-    box-sizing: border-box;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0E1420;
-      --surface: #182131;
-      --ink: #EAF0FA;
-      --muted: #9AA7BD;
-      --line: #2A3650;
-      --juridicas: #6E93FF;
-      --sociales: #3CC4C6;
-      --tecnicas: #F0A83C;
-    }
-  }
-  *, *::before, *::after { box-sizing: border-box; }
-  html { scroll-padding-top: env(safe-area-inset-top, 0px); -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-  }
-  main { max-width: 640px; margin: 0 auto; padding: 20px 16px 40px; }
-
-  h1 {
-    font-family: ui-serif, "New York", Georgia, serif;
-    font-size: 2rem; line-height: 1.1; margin: 8px 0 4px; letter-spacing: -0.01em;
-  }
-  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 1rem; }
-
-  /* Bloques */
-  .bloque { margin-bottom: 14px; }
-  .bloque-cab {
-    width: 100%; display: flex; align-items: center; gap: 12px;
-    background: var(--surface); border: 1px solid var(--line);
-    border-left: 6px solid var(--acento);
-    border-radius: 14px; padding: 16px; min-height: 64px;
-    font: inherit; color: inherit; text-align: left; cursor: pointer;
-  }
-  .bloque-cab .titulo { flex: 1; }
-  .bloque-cab strong { display: block; font-size: 1.05rem; }
-  .bloque-cab span.meta { color: var(--muted); font-size: 0.85rem; }
-  .chevron { transition: transform .2s; color: var(--muted); font-size: 1.2rem; }
-  .bloque.abierto .chevron { transform: rotate(90deg); }
-
-  .temas {
-    display: none; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px 0 4px;
-  }
-  .bloque.abierto .temas { display: grid; }
-
-  .tema-btn {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 12px; padding: 12px; min-height: 84px;
-    display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
-    font: inherit; color: inherit; text-align: left; cursor: pointer;
-  }
-  .tema-btn:active { transform: scale(0.98); }
-  .tema-num { color: var(--acento); font-weight: 700; font-size: 1.1rem; }
-  .tema-nombre { font-size: 0.82rem; line-height: 1.25; color: var(--ink); }
-  .tema-cuenta { font-size: 0.75rem; color: var(--muted); }
-  .tema-btn.vacio .tema-cuenta { opacity: .8; }
-
-  button:focus-visible { outline: 3px solid var(--acento, var(--juridicas)); outline-offset: 2px; }
-
-  /* Pantalla de tema */
-  .volver {
-    background: none; border: 0; color: var(--juridicas); font: inherit; font-size: 1.05rem;
-    padding: 10px 0; margin-bottom: 8px; cursor: pointer; min-height: 44px;
-  }
-  .vacio-caja {
-    background: var(--surface); border: 1px dashed var(--line); border-radius: 14px;
-    padding: 28px 18px; text-align: center; color: var(--muted);
-  }
-  [hidden] { display: none !important; }
-</style>
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <main>
 
-  <!-- ============ MENÚ PRINCIPAL ============ -->
-  <section id="vista-menu">
+  <!-- INICIO DE SESIÓN (solo si la nube está configurada) -->
+  <section id="vista-login" hidden>
     <h1>Flashcards</h1>
-    <p class="subtitle">Policía Nacional · Escala Básica. Elige un tema para estudiar.</p>
-    <div id="bloques"></div>
+    <p class="subtitle">Inicia sesión para sincronizar tus tarjetas en todos tus dispositivos.</p>
+    <form id="form-login" class="panel">
+      <label>Correo
+        <input id="in-email" type="email" autocomplete="username" required>
+      </label>
+      <label>Contraseña
+        <input id="in-pass" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="login-error" class="error" hidden></p>
+      <button class="btn primario" type="submit">Entrar</button>
+    </form>
   </section>
 
-  <!-- ============ PANTALLA DE TEMA (provisional) ============ -->
+  <!-- MENÚ PRINCIPAL -->
+  <section id="vista-menu" hidden>
+    <h1>Flashcards</h1>
+    <p class="subtitle">Policía Nacional · Escala Básica. Elige un tema.</p>
+    <div id="bloques"></div>
+    <p id="estado" class="estado"></p>
+    <button id="btn-salir" class="btn texto" hidden>Cerrar sesión</button>
+  </section>
+
+  <!-- PANTALLA DE UN TEMA -->
   <section id="vista-tema" hidden>
     <button class="volver" id="btn-volver">‹ Temas</button>
     <h1 id="tema-titulo"></h1>
     <p class="subtitle" id="tema-bloque"></p>
-    <div class="vacio-caja" id="tema-contenido"></div>
+
+    <button class="btn primario" id="btn-nueva">+ Añadir flashcard</button>
+
+    <form id="form-card" class="panel" hidden>
+      <label>Pregunta
+        <textarea id="in-pregunta" rows="3" required></textarea>
+      </label>
+      <label>Respuesta
+        <textarea id="in-respuesta" rows="5" required></textarea>
+      </label>
+      <div class="fila">
+        <button class="btn primario" type="submit" id="btn-guardar">Guardar</button>
+        <button class="btn secundario" type="button" id="btn-cancelar">Cerrar</button>
+      </div>
+    </form>
+
+    <div id="lista"></div>
   </section>
 
 </main>
+<div id="aviso" class="aviso" hidden></div>
 
-<script>
-/* =====================================================================
-   DATOS DEL TEMARIO
-   Para cambiar el nombre de un tema, edita su "nombre" aquí.
-   Los temas con nombre "" se muestran solo como "Tema N" hasta que
-   los rellenes con el título oficial.
-   ===================================================================== */
-const BLOQUES = [
-  { id: "juridicas", nombre: "Ciencias Jurídicas",           color: "var(--juridicas)", desde: 1,  hasta: 26 },
-  { id: "sociales",  nombre: "Ciencias Sociales",            color: "var(--sociales)",  desde: 27, hasta: 37 },
-  { id: "tecnicas",  nombre: "Materias Técnico-Científicas", color: "var(--tecnicas)",  desde: 38, hasta: 45 },
-];
-
-const NOMBRES = {
-  1:  "El Derecho",
-  2:  "Constitución Española",
-  3:  "Constitución Española",
-  4:  "UE",
-  5:  "AGE",
-  6:  "Funcionarios Públicos",
-  7:  "El Ministerio del Interior",
-  34: "Drogodependencias",
-  35: "El desarrollo sostenible",
-  36: "Gramática de la lengua española",
-  37: "Ortografía de la lengua española",
-};
-
-/* Las flashcards se irán añadiendo aquí, por número de tema:
-   FLASHCARDS[1] = [ { pregunta: "...", respuesta: "..." }, ... ]  */
-const FLASHCARDS = {};
-
-/* ===================================================================== */
-
-const $ = (id) => document.getElementById(id);
-const cuenta = (n) => (FLASHCARDS[n] || []).length;
-
-function bloqueDe(n) { return BLOQUES.find(b => n >= b.desde && n <= b.hasta); }
-
-function pintarMenu() {
-  const cont = $("bloques");
-  cont.innerHTML = "";
-  const abierto = sessionStorageSeguro("bloqueAbierto") || "juridicas";
-
-  BLOQUES.forEach(b => {
-    const total = b.hasta - b.desde + 1;
-    let tarjetas = 0;
-    for (let n = b.desde; n <= b.hasta; n++) tarjetas += cuenta(n);
-
-    const sec = document.createElement("div");
-    sec.className = "bloque" + (b.id === abierto ? " abierto" : "");
-    sec.style.setProperty("--acento", b.color);
-
-    const cab = document.createElement("button");
-    cab.className = "bloque-cab";
-    cab.setAttribute("aria-expanded", b.id === abierto);
-    cab.innerHTML = `
-      <div class="titulo">
-        <strong>${b.nombre}</strong>
-        <span class="meta">${total} temas · ${tarjetas} tarjetas</span>
-      </div>
-      <span class="chevron" aria-hidden="true">›</span>`;
-    cab.addEventListener("click", () => {
-      const abrir = !sec.classList.contains("abierto");
-      sec.classList.toggle("abierto", abrir);
-      cab.setAttribute("aria-expanded", abrir);
-      sessionStorageSeguro("bloqueAbierto", abrir ? b.id : "");
-    });
-
-    const grid = document.createElement("div");
-    grid.className = "temas";
-    for (let n = b.desde; n <= b.hasta; n++) {
-      const t = document.createElement("button");
-      const c = cuenta(n);
-      t.className = "tema-btn" + (c === 0 ? " vacio" : "");
-      t.innerHTML = `
-        <span class="tema-num">Tema ${n}</span>
-        <span class="tema-nombre">${NOMBRES[n] || ""}</span>
-        <span class="tema-cuenta">${c === 0 ? "Sin tarjetas" : c + (c === 1 ? " tarjeta" : " tarjetas")}</span>`;
-      t.addEventListener("click", () => { location.hash = "tema-" + n; });
-      grid.appendChild(t);
-    }
-
-    sec.append(cab, grid);
-    cont.appendChild(sec);
-  });
-}
-
-/* sessionStorage puede fallar en modo privado: lo protegemos */
-function sessionStorageSeguro(clave, valor) {
-  try {
-    if (valor === undefined) return sessionStorage.getItem(clave);
-    sessionStorage.setItem(clave, valor);
-  } catch (e) { return null; }
-}
-
-function mostrarTema(n) {
-  const b = bloqueDe(n);
-  if (!b) { location.hash = ""; return; }
-  $("tema-titulo").textContent = "Tema " + n;
-  $("tema-bloque").textContent = (NOMBRES[n] ? NOMBRES[n] + " · " : "") + b.nombre;
-  $("tema-contenido").textContent = cuenta(n) === 0
-    ? "Aún no hay tarjetas en este tema. Aquí irá el modo estudio."
-    : cuenta(n) + " tarjetas listas. Aquí irá el modo estudio.";
-  $("vista-menu").hidden = true;
-  $("vista-tema").hidden = false;
-  window.scrollTo(0, 0);
-}
-
-function enrutar() {
-  const m = location.hash.match(/^#tema-(\d+)$/);
-  if (m) { mostrarTema(parseInt(m[1], 10)); return; }
-  $("vista-tema").hidden = true;
-  $("vista-menu").hidden = false;
-}
-
-$("btn-volver").addEventListener("click", () => { location.hash = ""; });
-window.addEventListener("hashchange", enrutar);
-
-pintarMenu();
-enrutar();
-</script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
