@@ -106,28 +106,75 @@ input, textarea {
 .estado { color: var(--muted); font-size: 0.85rem; margin: 18px 0 0; }
 
 /* ---------- Lista de flashcards ---------- */
-#lista { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+#lista { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
 .vacio-caja {
   border: 1px dashed var(--line); border-radius: 14px; padding: 28px 18px;
   text-align: center; color: var(--muted);
 }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.card-cuerpo {
-  width: 100%; text-align: left; font: inherit; color: inherit; background: none;
-  border: 0; padding: 16px; cursor: pointer; display: block;
+
+/* Tarjeta que gira: las dos caras ocupan la misma celda de la rejilla,
+   así la tarjeta mide lo que mida la cara más larga. */
+.card-giro {
+  position: relative; perspective: 1100px; cursor: pointer;
+  outline-offset: 3px; border-radius: 14px;
 }
-.card-q { font-weight: 600; white-space: pre-wrap; }
-.card-a {
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);
-  white-space: pre-wrap; color: var(--ink);
+.card-inner {
+  display: grid; transform-style: preserve-3d;
+  transition: transform .55s cubic-bezier(.4, .2, .2, 1);
 }
-.card-pista { display: block; margin-top: 8px; font-size: 0.78rem; color: var(--muted); }
-.card-acciones { display: flex; border-top: 1px solid var(--line); }
-.card-acciones button {
-  flex: 1; font: inherit; font-size: 0.9rem; background: none; border: 0;
-  padding: 12px; min-height: 44px; color: var(--primario); cursor: pointer;
+.card-giro.volteada .card-inner { transform: rotateY(180deg); }
+
+.cara {
+  grid-area: 1 / 1;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px 18px; min-height: 120px;
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
 }
-.card-acciones button + button { border-left: 1px solid var(--line); color: var(--peligro); }
+.cara.dorso { transform: rotateY(180deg); border-color: var(--primario); }
+.card-q { font-weight: 600; font-size: 1.05rem; line-height: 1.35; }
+.card-a { line-height: 1.4; }
+.card-pista, .cara-etiqueta { font-size: 0.78rem; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-inner { transition: none; }
+}
+
+/* ---------- Modo edición ---------- */
+.marca { display: none; }
+body.modo-edicion main { padding-bottom: 130px; }
+body.modo-edicion .marca {
+  display: block; position: absolute; top: 12px; right: 12px; z-index: 2;
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--muted); background: var(--surface);
+}
+body.modo-edicion .card-pista { display: none; }
+body.modo-edicion .cara.frente { padding-right: 52px; }
+.card-giro.seleccionada .cara { border-color: var(--primario); box-shadow: 0 0 0 2px var(--primario); }
+.card-giro.seleccionada .marca { background: var(--primario); border-color: var(--primario); }
+.card-giro.seleccionada .marca::after {
+  content: "✓"; display: block; text-align: center; line-height: 22px;
+  font-size: 15px; font-weight: 700; color: var(--sobre-primario);
+}
+
+#barra-tema .btn { width: auto; }
+#btn-nueva { flex: 1; }
+#btn-modo { flex: 0 0 auto; padding-left: 22px; padding-right: 22px; }
+#btn-sel-todas { margin: 8px 0 0; padding-left: 0; }
+
+.btn.peligro { background: var(--peligro); color: var(--sobre-primario); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+.barra {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.barra-int { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+.barra-cuenta { flex: 1; font-size: 0.9rem; color: var(--muted); }
+.barra .btn { width: auto; flex: 0 0 auto; padding: 12px 20px; }
+body.modo-edicion .aviso { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
 /* ---------- Aviso ---------- */
 .aviso {
