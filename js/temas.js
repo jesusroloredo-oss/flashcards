@@ -10,7 +10,12 @@ export const BLOQUES = [
 ];
 
 export const NOMBRES = {
-  1:  "El Derecho: concepto y acepciones",
+  1:  "El Derecho",
+  2:  "Constitución Española",
+  3:  "Constitución Española",
+  4:  "UE",
+  5:  "AGE",
+  6:  "Funcionarios Públicos",
   7:  "El Ministerio del Interior",
   34: "Drogodependencias",
   35: "El desarrollo sostenible",
