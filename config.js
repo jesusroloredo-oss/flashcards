@@ -7,7 +7,14 @@
      tu proyecto de Firebase (ver instrucciones) y vuelve a subir el archivo.
    ====================================================================== */
 
-export const FIREBASE_CONFIG = null;
+   export const FIREBASE_CONFIG = {
+     apiKey: "…",
+     authDomain: "flashcards-pn.firebaseapp.com",
+     projectId: "flashcards-pn",
+     storageBucket: "…",
+     messagingSenderId: "…",
+     appId: "…"
+   };
 
 /* Ejemplo de cómo quedará:
 export const FIREBASE_CONFIG = {
