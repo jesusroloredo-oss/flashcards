@@ -1,5 +1,6 @@
 /* ======================================================================
-   LÓGICA DE LA INTERFAZ: menú, pantalla de tema y alta de flashcards.
+   LÓGICA DE LA INTERFAZ: menú, pantalla de tema, alta de flashcards,
+   giro de tarjetas y modo edición (selección múltiple).
    ====================================================================== */
 import { BLOQUES, NOMBRES, bloqueDe } from "./temas.js";
 import { crearAlmacen } from "./storage.js";
@@ -11,8 +12,10 @@ let usuario = null;          // null = sin sesión (solo en modo nube)
 let desuscribir = null;
 let datos = {};              // { tema: [tarjetas] }
 let temaActual = null;
-let editandoId = null;
-const abiertas = new Set();  // tarjetas con la respuesta visible
+let editandoId = null;       // tarjeta que se está editando en el formulario
+let modoEdicion = false;     // modo de selección para editar/borrar
+const abiertas = new Set();  // tarjetas giradas (mostrando la respuesta)
+const seleccion = new Set(); // tarjetas marcadas en modo edición
 
 const cuenta = (n) => (datos[n] || []).length;
 
@@ -98,7 +101,13 @@ function pintarMenu() {
 function abrirTema(n) {
   const b = bloqueDe(n);
   if (!b) { location.hash = ""; return; }
-  if (temaActual !== n) { cerrarFormulario(); abiertas.clear(); }
+  if (temaActual !== n) {
+    temaActual = n;
+    modoEdicion = false;
+    seleccion.clear();
+    abiertas.clear();
+    cerrarFormulario();
+  }
   temaActual = n;
   $("tema-titulo").textContent = "Tema " + n;
   $("tema-bloque").textContent = (NOMBRES[n] ? NOMBRES[n] + " · " : "") + b.nombre;
@@ -106,64 +115,146 @@ function abrirTema(n) {
   ver("vista-tema");
 }
 
+/* Muestra u oculta los controles según el modo (normal / edición) */
+function aplicarModo() {
+  const formAbierto = !$("form-card").hidden;
+  const hayTarjetas = cuenta(temaActual) > 0;
+  document.body.classList.toggle("modo-edicion", modoEdicion);
+  $("btn-nueva").hidden = modoEdicion || formAbierto;
+  $("btn-modo").hidden = !hayTarjetas && !modoEdicion;
+  $("btn-modo").textContent = modoEdicion ? "Listo" : "Editar";
+  $("btn-sel-todas").hidden = !modoEdicion;
+  $("barra-edicion").hidden = !modoEdicion;
+  actualizarBarra();
+}
+
+function actualizarBarra() {
+  const n = seleccion.size;
+  const total = cuenta(temaActual);
+  $("barra-cuenta").textContent = n === 1 ? "1 seleccionada" : n + " seleccionadas";
+  $("btn-editar-sel").disabled = n !== 1;
+  $("btn-borrar-sel").disabled = n === 0;
+  $("btn-sel-todas").textContent = n > 0 && n === total ? "Quitar selección" : "Seleccionar todas";
+}
+
 function pintarLista() {
   const cont = $("lista");
   cont.innerHTML = "";
   const tarjetas = datos[temaActual] || [];
 
+  // Si se borraron tarjetas (aquí o desde otro dispositivo), limpia lo marcado
+  const ids = new Set(tarjetas.map((c) => c.id));
+  [...seleccion].forEach((id) => { if (!ids.has(id)) seleccion.delete(id); });
+  if (tarjetas.length === 0) modoEdicion = false;
+
   if (tarjetas.length === 0) {
     cont.appendChild(el("div", "vacio-caja", "Este tema aún no tiene tarjetas. Pulsa «Añadir flashcard» para crear la primera."));
+    aplicarModo();
     return;
   }
 
   tarjetas.forEach((c) => {
-    const art = el("article", "card");
+    const giro = el("div", "card-giro");
+    giro.setAttribute("role", "button");
+    giro.tabIndex = 0;
 
-    const cuerpo = el("button", "card-cuerpo");
-    cuerpo.append(el("span", "card-q", c.pregunta));
-    const respuesta = el("div", "card-a", c.respuesta);
-    const pista = el("span", "card-pista", "Toca para ver la respuesta");
-    const mostrar = (si) => {
-      respuesta.hidden = !si;
-      pista.hidden = si;
-      cuerpo.setAttribute("aria-expanded", String(si));
-    };
-    mostrar(abiertas.has(c.id));
-    cuerpo.addEventListener("click", () => {
-      if (abiertas.has(c.id)) abiertas.delete(c.id); else abiertas.add(c.id);
-      mostrar(abiertas.has(c.id));
-    });
-    cuerpo.append(pista, respuesta);
+    const inner = el("div", "card-inner");
+    const frente = el("div", "cara frente");
+    frente.append(el("span", "card-q", c.pregunta), el("span", "card-pista", "Toca para girar"));
+    const dorso = el("div", "cara dorso");
+    dorso.append(el("span", "cara-etiqueta", "Respuesta"), el("span", "card-a", c.respuesta));
+    inner.append(frente, dorso);
 
-    const acciones = el("div", "card-acciones");
-    const bEditar = el("button", "", "Editar");
-    const bBorrar = el("button", "", "Borrar");
-    bEditar.addEventListener("click", () => empezarEdicion(c));
-    bBorrar.addEventListener("click", () => {
-      if (confirm("¿Borrar esta flashcard?")) {
-        almacen.borrar(c.id).catch(errorGuardar);
-        aviso("Flashcard borrada");
+    const marca = el("span", "marca");
+    marca.setAttribute("aria-hidden", "true");
+    giro.append(inner, marca);
+
+    const pintarEstado = () => {
+      const girada = !modoEdicion && abiertas.has(c.id);
+      const marcada = modoEdicion && seleccion.has(c.id);
+      giro.classList.toggle("volteada", girada);
+      giro.classList.toggle("seleccionada", marcada);
+      if (modoEdicion) {
+        giro.setAttribute("aria-pressed", String(marcada));
+        giro.removeAttribute("aria-expanded");
+      } else {
+        giro.setAttribute("aria-expanded", String(girada));
+        giro.removeAttribute("aria-pressed");
       }
-    });
-    acciones.append(bEditar, bBorrar);
+      frente.setAttribute("aria-hidden", String(girada));
+      dorso.setAttribute("aria-hidden", String(!girada));
+    };
 
-    art.append(cuerpo, acciones);
-    cont.appendChild(art);
+    const accionar = () => {
+      const lista = modoEdicion ? seleccion : abiertas;
+      if (lista.has(c.id)) lista.delete(c.id); else lista.add(c.id);
+      pintarEstado();
+      if (modoEdicion) actualizarBarra();
+    };
+    giro.addEventListener("click", accionar);
+    giro.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); accionar(); }
+    });
+
+    pintarEstado();
+    cont.appendChild(giro);
   });
+
+  aplicarModo();
 }
+
+/* ------------------------- MODO EDICIÓN ------------------------- */
+$("btn-modo").addEventListener("click", () => {
+  modoEdicion = !modoEdicion;
+  seleccion.clear();
+  if (!$("form-card").hidden) cerrarFormulario();
+  pintarLista();
+});
+
+$("btn-sel-todas").addEventListener("click", () => {
+  const tarjetas = datos[temaActual] || [];
+  if (seleccion.size === tarjetas.length) seleccion.clear();
+  else tarjetas.forEach((c) => seleccion.add(c.id));
+  pintarLista();
+});
+
+$("btn-editar-sel").addEventListener("click", () => {
+  if (seleccion.size !== 1) return;
+  const id = [...seleccion][0];
+  const c = (datos[temaActual] || []).find((x) => x.id === id);
+  if (!c) return;
+  seleccion.clear();
+  pintarLista();
+  empezarEdicion(c);
+});
+
+$("btn-borrar-sel").addEventListener("click", () => {
+  const n = seleccion.size;
+  if (n === 0) return;
+  const pregunta = n === 1 ? "¿Borrar esta flashcard?" : `¿Borrar ${n} flashcards?`;
+  if (!confirm(pregunta)) return;
+  const ids = [...seleccion];
+  seleccion.clear();
+  ids.forEach((id) => {
+    abiertas.delete(id);
+    almacen.borrar(id).catch(errorGuardar);
+  });
+  aviso(n === 1 ? "Flashcard borrada" : n + " flashcards borradas");
+  pintarLista();
+});
 
 /* ------------------------ FORMULARIO DE TARJETAS ------------------------ */
 function abrirFormulario() {
   $("form-card").hidden = false;
-  $("btn-nueva").hidden = true;
+  aplicarModo();
   $("in-pregunta").focus();
 }
 function cerrarFormulario() {
   editandoId = null;
   $("form-card").reset();
   $("form-card").hidden = true;
-  $("btn-nueva").hidden = false;
   $("btn-guardar").textContent = "Guardar";
+  aplicarModo();
 }
 function empezarEdicion(c) {
   editandoId = c.id;
@@ -214,7 +305,6 @@ function mensajeLogin(ex) {
     "auth/unauthorized-domain": "Este dominio no está autorizado en Firebase (Authentication > Configuración > Dominios autorizados).",
     "auth/configuration-not-found": "Authentication no está iniciado en Firebase: pulsa «Comenzar» en Authentication.",
     "auth/invalid-api-key": "La apiKey de config.js no es válida. Vuelve a copiarla de la consola.",
-    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "La apiKey de config.js no es válida. Vuelve a copiarla de la consola.",
     "auth/network-request-failed": "Sin conexión o bloqueado por la red.",
     "auth/too-many-requests": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
     "auth/user-disabled": "Este usuario está deshabilitado en Firebase.",
@@ -244,6 +334,9 @@ function enrutar() {
   const m = location.hash.match(/^#tema-(\d+)$/);
   if (m) { abrirTema(parseInt(m[1], 10)); return; }
   temaActual = null;
+  modoEdicion = false;
+  seleccion.clear();
+  cerrarFormulario();
   pintarMenu();
   ver("vista-menu");
 }
